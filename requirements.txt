@@ -1,0 +1,4 @@
+python-dotenv
+sqlmodel
+fastapi
+uvicorn
