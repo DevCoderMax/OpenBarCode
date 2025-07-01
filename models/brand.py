@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from typing import Optional, List, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import func
+
+if TYPE_CHECKING:
+    from models.product import Product
 
 class BrandBase(SQLModel):
     name: str = Field(..., max_length=100, unique=True, index=True)
@@ -19,6 +22,9 @@ class Brand(BrandBase, table=True):
         nullable=False,
         sa_column_kwargs={"onupdate": func.now()}
     )
+    
+    # Relacionamento com produtos
+    products: List["Product"] = Relationship(back_populates="brand")
 
 class BrandCreate(BrandBase):
     pass
@@ -28,5 +34,5 @@ class BrandRead(BrandBase):
     created_at: datetime
     updated_at: datetime
 
-class BrandUpdate(SQLModel):  # Mudança aqui
+class BrandUpdate(SQLModel):
     name: Optional[str] = Field(None, max_length=100)

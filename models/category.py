@@ -1,7 +1,10 @@
 from datetime import datetime, timezone
-from typing import Optional
-from sqlmodel import SQLModel, Field
+from typing import Optional, List, TYPE_CHECKING
+from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import func
+
+if TYPE_CHECKING:
+    from models.product import ProductCategory
 
 class CategoryBase(SQLModel):
     name: str = Field(..., max_length=100, unique=True, index=True)
@@ -20,6 +23,9 @@ class Category(CategoryBase, table=True):
         nullable=False,
         sa_column_kwargs={"onupdate": func.now()}
     )
+    
+    # Relacionamento com produtos (através da tabela intermediária)
+    product_categories: List["ProductCategory"] = Relationship(back_populates="category")
 
 class CategoryCreate(CategoryBase):
     pass

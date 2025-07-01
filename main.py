@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import logging
 from contextlib import asynccontextmanager
 import time
+from routes.products import router as products_router
 
 # Imports do projeto
 from database import init_db, check_database_connection
@@ -99,6 +100,11 @@ app.include_router(
 
 app.include_router(
     categories_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    products_router,
     prefix="/api/v1"
 )
 
