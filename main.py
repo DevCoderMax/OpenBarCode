@@ -8,6 +8,7 @@ import time
 # Imports do projeto
 from database import init_db, check_database_connection
 from routes.brands import router as brands_router
+from routes.categories import router as categories_router
 
 # Configurar logging
 logging.basicConfig(
@@ -93,6 +94,11 @@ async def health_check():
 # Registrar routers
 app.include_router(
     brands_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    categories_router,
     prefix="/api/v1"
 )
 
