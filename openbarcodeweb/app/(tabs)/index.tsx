@@ -1,75 +1,192 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, TextInput, Modal, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
+import { Button } from '@/components/ui/Button';
+import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
+import { useFocusEffect } from '@react-navigation/native';
+import { MaterialIcons } from '@expo/vector-icons';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function ScanScreen() {
+  const [barcode, setBarcode] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [permission, requestPermission] = useCameraPermissions();
 
-export default function HomeScreen() {
+  useFocusEffect(
+    useCallback(() => {
+      setIsScanning(false);
+      return () => {};
+    }, [])
+  );
+
+  const handleBarCodeScanned = useCallback(({ data }: BarcodeScanningResult) => {
+    if (isScanning) {
+      setIsScanning(false);
+      setBarcode(data);
+      console.log('Código escaneado:', data);
+    }
+  }, [isScanning]);
+
+  const requestCameraPermission = async () => {
+    const { granted } = await requestPermission();
+    if (granted) {
+      setIsScanning(true);
+    } else {
+      Alert.alert(
+        'Permissão necessária',
+        'Precisamos da permissão da câmera para escanear códigos de barras.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder="Digite o código de barras"
+          value={barcode}
+          onChangeText={setBarcode}
+          keyboardType="number-pad"
+          placeholderTextColor="#999"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <TouchableOpacity 
+          onPress={requestCameraPermission}
+          style={styles.scanButton}
+        >
+          <MaterialIcons name="photo-camera" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        visible={isScanning}
+        animationType="slide"
+        onRequestClose={() => setIsScanning(false)}
+        statusBarTranslucent
+      >
+        <View style={styles.modalContainer}>
+          {!permission?.granted ? (
+            <View style={styles.permissionContainer}>
+              <Text style={styles.permissionText}>
+                Precisamos da sua permissão para acessar a câmera.
+              </Text>
+              <View style={styles.buttonGroup}>
+                <Button 
+                  title="Permitir" 
+                  onPress={requestCameraPermission}
+                  style={styles.allowButton}
+                />
+                <Button 
+                  title="Cancelar" 
+                  onPress={() => setIsScanning(false)}
+                  style={styles.cancelButton}
+                />
+              </View>
+            </View>
+          ) : (
+            <View style={styles.cameraContainer}>
+              <CameraView
+                style={styles.camera}
+                facing="back"
+                barcodeScannerSettings={{
+                  barcodeTypes: ['ean13', 'ean8', 'code128', 'code39', 'code93', 'upc_a', 'upc_e', 'qr'],
+                }}
+                onBarcodeScanned={isScanning ? handleBarCodeScanned : undefined}
+              />
+              <TouchableOpacity 
+                onPress={() => setIsScanning(false)}
+                style={styles.closeButton}
+              >
+                <MaterialIcons name="close" size={28} color="white" />
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Modal>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+    backgroundColor: '#f8f9fa',
+    padding: 20,
+    paddingTop: 60,
+  },
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: 20,
+    marginTop: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  input: {
+    flex: 1,
+    height: 50,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    marginRight: 12,
+    fontSize: 16,
+    backgroundColor: '#fff',
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
+  scanButton: {
+    backgroundColor: '#2563eb',
+    width: 50,
+    height: 50,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'black',
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+  },
+  permissionText: {
+    color: 'white',
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 30,
+  },
+  buttonGroup: {
+    width: '80%',
+  },
+  allowButton: {
+    backgroundColor: '#2563eb',
+    marginBottom: 12,
+    height: 50,
+    borderRadius: 8,
+  },
+  cancelButton: {
+    backgroundColor: '#dc3545',
+    height: 50,
+    borderRadius: 8,
+  },
+
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  camera: {
+    flex: 1,
+  },
+  closeButton: {
     position: 'absolute',
+    top: 40,
+    right: 20,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 });
