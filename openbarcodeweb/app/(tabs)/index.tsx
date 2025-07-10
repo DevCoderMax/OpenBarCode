@@ -1,29 +1,145 @@
 import React, { useState, useCallback } from 'react';
-import { View, TextInput, Modal, StyleSheet, Text, Alert, TouchableOpacity } from 'react-native';
+import {
+  TextInput,
+  Modal,
+  StyleSheet,
+  Alert,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { CameraView, useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { ThemedView } from '@/components/ThemedView';
+import { ThemedText } from '@/components/ThemedText';
+import { Input } from '@/components/ui/Input';
+import { ThemedSwitch } from '@/components/ui/ThemedSwitch';
+import { CheckboxGroup } from '@/components/ui/Checkbox';
+import { SearchablePicker } from '@/components/ui/SearchablePicker';
+import { API_URL } from '../../constants/Api';
+import { Product } from '@/models/Product';
+
+const measureTypeItems = ['l', 'ml', 'kg', 'g', 'un'].map(type => ({ label: type.toUpperCase(), value: type }));
 
 export default function ScanScreen() {
   const [barcode, setBarcode] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [productFound, setProductFound] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
-      setIsScanning(false);
-      return () => {};
+      // Limpa o estado quando a tela perde o foco
+      return () => {
+        setProduct(null);
+        setBarcode('');
+        setProductFound(false);
+      };
     }, [])
   );
+
+  const handleSearch = async (code: string) => {
+    if (!code) {
+      Alert.alert('Atenção', 'Por favor, digite ou escaneie um código de barras.');
+      return;
+    }
+
+    setIsLoading(true);
+    setProduct(null);
+
+    try {
+      // A rota na API é /api/v1/products/search/?barcode=...
+      const response = await fetch(`${API_URL}/api/v1/products/search/?barcode=${code}`);
+      
+      if (!response.ok) {
+        throw new Error('Falha ao buscar o produto.');
+      }
+
+      const data: Product[] = await response.json();
+
+      if (data.length > 0) {
+        setProduct(data[0]);
+        setProductFound(true);
+        Alert.alert('Sucesso', 'Produto encontrado e pronto para edição.');
+      } else {
+        setProduct({
+          name: '',
+          barcode: code,
+          status: true,
+          description: '',
+          images: '',
+          measure_type: 'un',
+          measure_value: 0,
+          qtt: 1,
+        });
+        setProductFound(false);
+        Alert.alert('Informação', 'Produto não encontrado. Preencha os dados para adicioná-lo.');
+      }
+    } catch (error: any) {
+      Alert.alert('Erro', error.message || 'Ocorreu um erro ao buscar o produto.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleBarCodeScanned = useCallback(({ data }: BarcodeScanningResult) => {
     if (isScanning) {
       setIsScanning(false);
       setBarcode(data);
-      console.log('Código escaneado:', data);
+      handleSearch(data); // Chama a busca automaticamente
     }
-  }, [isScanning]);
+  }, [isScanning, handleSearch]);
+
+  const handleSave = async () => {
+    if (!product) return;
+
+    setIsSaving(true);
+    try {
+      const url = productFound
+        ? `${API_URL}/api/v1/products/${product.id}`
+        : `${API_URL}/api/v1/products/`;
+
+      const method = productFound ? 'PUT' : 'POST';
+
+      const productData: any = {
+        ...product,
+        measure_value: product.measure_value ? parseFloat(String(product.measure_value).replace(',', '.')) : undefined,
+        qtt: product.qtt ? parseInt(String(product.qtt), 10) : undefined,
+      };
+
+      // Remove a chave 'id' para a criação de um novo produto
+      if (!productFound) {
+        delete productData.id;
+      }
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(productData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Falha ao salvar o produto');
+      }
+
+      Alert.alert('Sucesso', `Produto ${productFound ? 'atualizado' : 'criado'} com sucesso!`);
+      setProduct(null); // Limpa o formulário
+      setBarcode('');
+
+    } catch (e: any) {
+      Alert.alert('Erro', e.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const requestCameraPermission = async () => {
     const { granted } = await requestPermission();
@@ -39,8 +155,8 @@ export default function ScanScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.inputContainer}>
+    <ThemedView style={styles.container}>
+      <ThemedView style={styles.inputContainer}>
         <TextInput
           style={styles.input}
           placeholder="Digite o código de barras"
@@ -51,11 +167,87 @@ export default function ScanScreen() {
         />
         <TouchableOpacity 
           onPress={requestCameraPermission}
-          style={styles.scanButton}
+          style={styles.iconButton}
         >
           <MaterialIcons name="photo-camera" size={24} color="white" />
         </TouchableOpacity>
-      </View>
+        <TouchableOpacity 
+          onPress={() => handleSearch(barcode)}
+          style={styles.iconButton}
+        >
+          <MaterialIcons name="search" size={24} color="white" />
+        </TouchableOpacity>
+      </ThemedView>
+
+      {isLoading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
+
+      {product && (
+        <ScrollView style={styles.formContainer}>
+          <ThemedText type="title" style={styles.title}>
+            {productFound ? 'Editar Produto' : 'Adicionar Novo Produto'}
+          </ThemedText>
+
+          <Input
+            label="Nome do Produto"
+            value={product.name}
+            onChangeText={(text) => setProduct({ ...product, name: text })}
+          />
+          <Input
+            label="Descrição"
+            value={product.description || ''}
+            onChangeText={(text) => setProduct({ ...product, description: text })}
+            multiline
+          />
+          <Input
+            label="Código de Barras"
+            value={product.barcode || ''}
+            editable={false} // Não editável após a busca
+          />
+          <Input
+            label="Imagens (URL, separadas por vírgula)"
+            value={product.images || ''}
+            onChangeText={(text) => setProduct({ ...product, images: text })}
+            multiline
+          />
+          <Input
+            label="Valor da Medida"
+            value={String(product.measure_value || '')}
+            onChangeText={(text) => setProduct({ ...product, measure_value: parseFloat(text.replace(/[^0-9.,]/g, '')) })}
+            keyboardType="numeric"
+          />
+          <CheckboxGroup
+            label="Tipo de Medida"
+            options={measureTypeItems}
+            selectedValue={product.measure_type || 'un'}
+            onValueChange={(value) => setProduct({ ...product, measure_type: value as string })}
+          />
+          <Input
+            label="Quantidade"
+            value={String(product.qtt || '')}
+            onChangeText={(text) => setProduct({ ...product, qtt: parseInt(text.replace(/[^0-9]/g, ''), 10) || 0 })}
+            keyboardType="numeric"
+          />
+          <SearchablePicker
+            label="Marca"
+            selectedLabel={product.brand ? product.brand.name : ''}
+            onValueChange={(brand) => {
+              setProduct({ ...product, brand_id: brand.id, brand: brand });
+            }}
+          />
+          <ThemedSwitch
+            label="Status (Ativo)"
+            value={product.status}
+            onValueChange={(value) => setProduct({ ...product, status: value })}
+          />
+
+          <Button
+            title={isSaving ? 'Salvando...' : 'Salvar Alterações'}
+            onPress={handleSave}
+            disabled={isSaving}
+            style={{ marginTop: 24 }}
+          />
+        </ScrollView>
+      )}
 
       <Modal
         visible={isScanning}
@@ -63,13 +255,13 @@ export default function ScanScreen() {
         onRequestClose={() => setIsScanning(false)}
         statusBarTranslucent
       >
-        <View style={styles.modalContainer}>
+        <ThemedView style={styles.modalContainer}>
           {!permission?.granted ? (
-            <View style={styles.permissionContainer}>
-              <Text style={styles.permissionText}>
+            <ThemedView style={styles.permissionContainer}>
+              <ThemedText style={styles.permissionText}>
                 Precisamos da sua permissão para acessar a câmera.
-              </Text>
-              <View style={styles.buttonGroup}>
+              </ThemedText>
+              <ThemedView style={styles.buttonGroup}>
                 <Button 
                   title="Permitir" 
                   onPress={requestCameraPermission}
@@ -80,10 +272,10 @@ export default function ScanScreen() {
                   onPress={() => setIsScanning(false)}
                   style={styles.cancelButton}
                 />
-              </View>
-            </View>
+              </ThemedView>
+            </ThemedView>
           ) : (
-            <View style={styles.cameraContainer}>
+            <ThemedView style={styles.cameraContainer}>
               <CameraView
                 style={styles.camera}
                 facing="back"
@@ -98,18 +290,17 @@ export default function ScanScreen() {
               >
                 <MaterialIcons name="close" size={28} color="white" />
               </TouchableOpacity>
-            </View>
+            </ThemedView>
           )}
-        </View>
+        </ThemedView>
       </Modal>
-    </View>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
     padding: 20,
     paddingTop: 60,
   },
@@ -123,14 +314,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 50,
     borderWidth: 1,
-    borderColor: '#dee2e6',
     borderRadius: 8,
     paddingHorizontal: 16,
     marginRight: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
   },
-  scanButton: {
+  iconButton: {
     backgroundColor: '#2563eb',
     width: 50,
     height: 50,
@@ -140,17 +329,14 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'black',
   },
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
   },
   permissionText: {
-    color: 'white',
     fontSize: 18,
     textAlign: 'center',
     marginBottom: 30,
@@ -169,13 +355,19 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 8,
   },
-
   cameraContainer: {
     flex: 1,
     position: 'relative',
   },
   camera: {
     flex: 1,
+  },
+  formContainer: {
+    marginTop: 20,
+  },
+  title: {
+    marginBottom: 24,
+    textAlign: 'center',
   },
   closeButton: {
     position: 'absolute',

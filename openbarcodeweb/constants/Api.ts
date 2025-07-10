@@ -1,1 +1,1 @@
-export const API_URL = 'https://io-computation-gadgets-conduct.trycloudflare.com';
+export const API_URL = 'https://maria-parade-wide-democratic.trycloudflare.com';

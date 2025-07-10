@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Modal, StyleSheet, View, Pressable, FlatList, ActivityIndicator } from 'react-native';
+import { Modal, StyleSheet, View, Pressable, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { ThemedView } from '../ThemedView';
 import { Input } from './Input';
@@ -19,6 +19,7 @@ export function SearchablePicker({ label, onValueChange, selectedLabel }: Search
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(false);
+  const [newBrandName, setNewBrandName] = useState('');
 
   const borderColor = useThemeColor({}, 'border');
   const itemSeparatorColor = useThemeColor({ light: '#eee', dark: '#333' }, 'border');
@@ -59,6 +60,38 @@ export function SearchablePicker({ label, onValueChange, selectedLabel }: Search
     setModalVisible(false);
     setSearchQuery('');
     setSearchResults([]);
+    setNewBrandName('');
+  }
+
+  async function handleAddNewBrand() {
+    if (!newBrandName.trim()) {
+      Alert.alert('Atenção', 'O nome da marca não pode ser vazio.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/v1/brands/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: newBrandName }),
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.detail || 'Falha ao criar a marca.');
+      }
+
+      Alert.alert('Sucesso', 'Marca criada e selecionada!');
+      handleSelect(responseData); // Seleciona a nova marca
+
+    } catch (error: any) {
+      Alert.alert('Erro ao criar marca', error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -96,7 +129,22 @@ export function SearchablePicker({ label, onValueChange, selectedLabel }: Search
                 ListEmptyComponent={<ThemedText style={styles.emptyText}>Nenhuma marca encontrada.</ThemedText>}
               />
             )}
-            <Button title="Fechar" onPress={() => setModalVisible(false)} />
+
+            <View style={styles.addBrandContainer}>
+              <Input
+                placeholder="Ou adicione uma nova marca"
+                value={newBrandName}
+                onChangeText={setNewBrandName}
+              />
+              <Button
+                title="Adicionar e Selecionar"
+                onPress={handleAddNewBrand}
+                disabled={loading || !newBrandName.trim()}
+                style={{ marginTop: 8 }}
+              />
+            </View>
+
+            <Button title="Fechar" onPress={() => setModalVisible(false)} style={styles.closeButton} />
           </ThemedView>
         </View>
       </Modal>
@@ -140,5 +188,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20,
     fontStyle: 'italic',
+  },
+  addBrandContainer: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#dc3545', // Cor vermelha para o botão de fechar
   },
 });
