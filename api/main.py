@@ -1,7 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 from fastapi.responses import JSONResponse
 import logging
 from contextlib import asynccontextmanager
@@ -27,18 +25,18 @@ async def lifespan(app: FastAPI):
     Gerencia o ciclo de vida da aplicação
     """
     # Startup
-    logger.info(" Iniciando aplicação...")
+    logger.info("🚀 Iniciando aplicação...")
     try:
         init_db()
-        logger.info(" Aplicação iniciada com sucesso!")
+        logger.info("✅ Aplicação iniciada com sucesso!")
     except Exception as e:
-        logger.error(f" Erro ao inicializar aplicação: {str(e)}")
+        logger.error(f"❌ Erro ao inicializar aplicação: {str(e)}")
         raise
     
     yield
     
     # Shutdown
-    logger.info(" Encerrando aplicação...")
+    logger.info("🛑 Encerrando aplicação...")
 
 # Criar instância do FastAPI
 app = FastAPI(
@@ -51,6 +49,14 @@ app = FastAPI(
 )
 
 # Configurar CORS
+# Middleware para remover a barra final das URLs
+@app.middleware("http")
+async def remove_trailing_slash(request: Request, call_next):
+    if request.scope['path'].endswith('/') and request.scope['path'] != '/':
+        request.scope['path'] = request.scope['path'].rstrip('/')
+    response = await call_next(request)
+    return response
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Em produção, especificar domínios permitidos
@@ -58,17 +64,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Middleware para remover a barra final das URLs
-class StripTrailingSlashMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        if len(request.scope['path']) > 1 and request.scope['path'].endswith('/'):
-            request.scope['path'] = request.scope['path'].rstrip('/')
-        
-        response = await call_next(request)
-        return response
-
-app.add_middleware(StripTrailingSlashMiddleware)
 
 # Handler global para exceções
 @app.exception_handler(Exception)
