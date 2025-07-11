@@ -51,57 +51,34 @@ OpenBarCode/
 
 ## Getting Started
 
+This project is composed of a frontend application that consumes a backend API. As the API is already hosted, you only need to set up and run the frontend application.
+
 ### Prerequisites
 
 - **Node.js** and **npm** (or **yarn**)
-- **Python 3.11+** and **pip**
-- **PostgreSQL** database running
-- **Expo Go** app on your mobile device (for testing)
+- **Expo Go** app on your mobile device for testing.
 
-### Backend Setup
+### Setup and Running the Application
 
-1.  **Navigate to the `api` directory:**
-    ```sh
-    cd api
+1.  **Configure the API URL:**
+    - Open the file `openbarcodeweb/constants/Api.ts`.
+    - Replace the existing URL with the API URL provided to you.
+
+    ```typescript
+    export const API_URL = 'YOUR_API_URL_HERE';
     ```
 
-2.  **Create a virtual environment:**
-    ```sh
-    python -m venv .venv
-    source .venv/bin/activate  # On Windows, use `.venv\Scripts\activate`
-    ```
-
-3.  **Install the dependencies:**
-    ```sh
-    pip install -r requirements.txt
-    ```
-
-4.  **Configure your database connection:**
-    - Create a `.env` file in the `api` directory.
-    - Add your PostgreSQL connection string to the `.env` file:
-      ```
-      DATABASE_URL="postgresql://user:password@host:port/database"
-      ```
-
-5.  **Run the application:**
-    ```sh
-    uvicorn main:app --reload
-    ```
-    The API will be available at `http://127.0.0.1:8000`.
-
-### Frontend Setup
-
-1.  **Navigate to the `openbarcodeweb` directory:**
+2.  **Navigate to the `openbarcodeweb` directory:**
     ```sh
     cd openbarcodeweb
     ```
 
-2.  **Install the dependencies:**
+3.  **Install the dependencies:**
     ```sh
     npm install
     ```
 
-3.  **Run the application:**
+4.  **Run the application:**
     ```sh
     npx expo start
     ```
