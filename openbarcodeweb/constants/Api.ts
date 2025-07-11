@@ -1,1 +1,1 @@
-export const API_URL = 'https://residents-jewellery-eleven-comments.trycloudflare.com';
+export const API_URL = 'https://max-opencodebarapi.uvxtdw.easypanel.host';
