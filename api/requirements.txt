@@ -2,3 +2,4 @@ python-dotenv
 sqlmodel
 fastapi
 uvicorn
+psycopg2-binary

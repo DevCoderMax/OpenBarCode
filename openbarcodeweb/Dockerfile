@@ -2,16 +2,17 @@ FROM node:lts AS build
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY openbarcodeweb/package*.json ./
 RUN npm install
 
-COPY . .
+COPY openbarcodeweb/ . 
 RUN npx expo build:web
 
+# Second stage: Nginx for serving
 FROM nginx:alpine
 
 COPY --from=build /app/web-build /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY openbarcodeweb/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 
