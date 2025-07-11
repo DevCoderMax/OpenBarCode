@@ -51,61 +51,94 @@ def _build_product_response(session: Session, product: Product) -> ProductRead:
 
 @router.post("/", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 def create_product(
-    product_data: ProductCreate,
+    product: ProductCreate,
     session: Session = Depends(get_session)
 ):
-    """Criar um novo produto"""
-    # Verificar se barcode já existe (se fornecido)
-    if product_data.barcode:
-        existing_product = session.exec(
-            select(Product).where(Product.barcode == product_data.barcode)
-        ).first()
-        
-        if existing_product:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Product with this barcode already exists"
-            )
-    
-    # Verificar se brand existe (se fornecido)
-    if product_data.brand_id:
-        brand = session.get(Brand, product_data.brand_id)
-        if not brand:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Brand not found"
-            )
-    
-    # Verificar se categorias existem (se fornecidas)
-    category_ids = product_data.category_ids or []
-    if category_ids:
-        for category_id in category_ids:
-            category = session.get(Category, category_id)
-            if not category:
+    """Cria um novo produto no sistema
+
+    Parâmetros:
+    - **product**: Dados do produto a ser criado
+    - **session**: Sessão do banco de dados (injetada automaticamente)
+
+    Retorna:
+    - O produto criado com todos os relacionamentos carregados
+
+    Exemplo:
+    ```json
+    {
+      "name": "Produto Exemplo",
+      "description": "Descrição do produto",
+      "price": 99.90,
+      "measure": "UN",
+      "brand_id": 1,
+      "category_ids": [1, 2]
+    }
+    ```
+    """
+    try:
+        # Verificar se barcode já existe (se fornecido)
+        if product.barcode:
+            existing_product = session.exec(
+                select(Product).where(Product.barcode == product.barcode)
+            ).first()
+            
+            if existing_product:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Category with id {category_id} not found"
+                    detail="Product with this barcode already exists"
                 )
-    
-    # Criar produto (excluindo category_ids do model_validate)
-    product_dict = product_data.model_dump(exclude={"category_ids"})
-    product = Product.model_validate(product_dict)
-    
-    session.add(product)
-    session.commit()
-    session.refresh(product)
-    
-    # Criar relacionamentos com categorias
-    for category_id in category_ids:
-        product_category = ProductCategory(
-            product_id=product.id,
-            category_id=category_id
+        
+        # Verificar se brand existe (se fornecido)
+        if product.brand_id:
+            brand = session.get(Brand, product.brand_id)
+            if not brand:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Brand not found"
+                )
+        
+        # Verificar se categorias existem (se fornecidas)
+        category_ids = product.category_ids or []
+        if category_ids:
+            for category_id in category_ids:
+                category = session.get(Category, category_id)
+                if not category:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Category with id {category_id} not found"
+                    )
+        
+        # Cria instância do produto
+        db_product = Product.model_validate(product.model_dump(exclude={"category_ids"}))
+        
+        # Adiciona ao banco de dados
+        session.add(db_product)
+        session.commit()
+        session.refresh(db_product)
+        
+        # Adiciona categorias ao produto
+        for category_id in category_ids:
+            session.add(ProductCategory(
+                product_id=db_product.id,
+                category_id=category_id
+            ))
+        session.commit()
+        
+        # Retorna o produto com relacionamentos
+        return _build_product_response(session, db_product)
+        
+    except IntegrityError as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Erro de integridade: {str(e)}"
         )
-        session.add(product_category)
-    
-    session.commit()
-    
-    return _build_product_response(session, product)
+    except Exception as e:
+        session.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro interno ao criar produto: {str(e)}"
+        )
 
 @router.get("/", response_model=List[ProductRead])
 def list_products(
