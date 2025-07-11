@@ -49,13 +49,15 @@ app = FastAPI(
 )
 
 # Configurar CORS
-# Middleware para remover a barra final das URLs
+from starlette.responses import RedirectResponse
+
+# Middleware para redirecionar URLs com barra final (exceto a raiz) para a mesma URL sem a barra
 @app.middleware("http")
-async def remove_trailing_slash(request: Request, call_next):
-    if request.scope['path'].endswith('/') and request.scope['path'] != '/':
-        request.scope['path'] = request.scope['path'].rstrip('/')
-    response = await call_next(request)
-    return response
+async def remove_trailing_slash_redirect(request: Request, call_next):
+    if request.url.path != "/" and request.url.path.endswith("/"):
+        url = request.url.replace(path=request.url.path.rstrip("/"))
+        return RedirectResponse(url=str(url), status_code=307)
+    return await call_next(request)
 
 app.add_middleware(
     CORSMiddleware,
