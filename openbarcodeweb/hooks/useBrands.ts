@@ -11,7 +11,7 @@ export function useBrands() {
     async function fetchBrands() {
       try {
         setLoading(true);
-        const response = await fetch(`${API_URL}/api/v1/brands`);
+        const response = await fetch(`${API_URL}/api/v1/brands/`);
         if (!response.ok) {
           throw new Error('Failed to fetch brands');
         }

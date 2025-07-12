@@ -13,7 +13,7 @@ export function useProducts() {
     setLoading(true);
     setError(null);
     try {
-      const url = `${API_URL}/api/v1/products`;
+      const url = `${API_URL}/api/v1/products/`;
       console.log('Fetching products from:', url);
       const response = await fetch(url);
       console.log('Response status:', response.status);

@@ -13,7 +13,7 @@ export function useProductDetail(productId: string | string[] | undefined) {
     async function fetchProduct() {
       try {
         setLoading(true);
-                const url = `${API_URL}/api/v1/products/${productId}`;
+                const url = `${API_URL}/api/v1/products/${productId}/`;
         console.log('Fetching product detail from:', url);
         const response = await fetch(url);
         console.log('Response status:', response.status);
