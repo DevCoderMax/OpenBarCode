@@ -54,7 +54,7 @@ export default function ScanScreen() {
 
     try {
       // A rota na API é /api/v1/products/search/?barcode=...
-      const response = await fetch(`${API_URL}/api/v1/products/search/?barcode=${code}`);
+      const response = await fetch(`${API_URL}/api/v1/products/search/?barcode=${code}/`);
       
       if (!response.ok) {
         throw new Error('Falha ao buscar o produto.');

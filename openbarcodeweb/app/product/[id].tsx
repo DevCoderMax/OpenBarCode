@@ -56,7 +56,7 @@ export default function ProductDetailScreen() {
       // Remove undefined keys so we don't send them
       Object.keys(productData).forEach(key => productData[key] === undefined && delete productData[key]);
 
-      const response = await fetch(`${API_URL}/api/v1/products/${id}`, {
+      const response = await fetch(`${API_URL}/api/v1/products/${id}/`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
