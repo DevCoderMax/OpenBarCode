@@ -10,7 +10,7 @@ interface ImageCarouselProps {
   showIndicators?: boolean;
 }
 
-const { width: screenWidth } = Dimensions.get('window');
+
 
 export function ImageCarousel({ 
   images, 

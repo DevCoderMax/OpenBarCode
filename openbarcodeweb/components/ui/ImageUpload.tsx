@@ -1,9 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { useImageUpload } from '@/hooks/useImageUpload';
-import { Button } from './Button';
+import { useImageUpload, UploadableImage } from '@/hooks/useImageUpload';
 import { extractEtagFromUrl } from '@/utils/imageUtils';
 
 interface ImageUploadProps {
@@ -19,20 +19,109 @@ export function ImageUpload({
   onImagesChange, 
   maxImages = 5 
 }: ImageUploadProps) {
-  const { uploadImage, getImageUrl, deleteImage, uploading, error } = useImageUpload();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadImage, getImageUrl, deleteImage, uploading } = useImageUpload();
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
+  const handleImagePick = async () => {
     if (images.length >= maxImages) {
       Alert.alert('Limit Reached', `You can only upload up to ${maxImages} images.`);
       return;
     }
 
-    const file = files[0];
+    if (Platform.OS === 'web') {
+      // Web implementation - create file input dynamically
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (event) => {
+        const target = event.target as HTMLInputElement;
+        if (target.files && target.files.length > 0) {
+          await handleFileSelect(target.files[0]);
+        }
+      };
+      input.click();
+    } else {
+      // Mobile implementation - show modal with options
+      setShowImagePickerModal(true);
+    }
+  };
+
+  const handleTakePhoto = async () => {
+    setShowImagePickerModal(false);
     
+    try {
+      // Request camera permissions
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera permissions to take photos.');
+        return;
+      }
+
+      // Take photo
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await processImageAsset(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  const handleSelectFromGallery = async () => {
+    setShowImagePickerModal(false);
+    
+    try {
+      // Request gallery permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Please grant camera roll permissions to select images.');
+        return;
+      }
+
+      // Pick image from gallery
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        await processImageAsset(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  const processImageAsset = async (asset: any) => {
+    // Validate file size (5MB limit)
+    if (asset.fileSize && asset.fileSize > 5 * 1024 * 1024) {
+      Alert.alert('File Too Large', 'Image must be smaller than 5MB.');
+      return;
+    }
+
+    // Enviar como objeto { uri, name, type }
+    const imageForUpload: UploadableImage = {
+      uri: asset.uri,
+      name: asset.fileName || 'image.jpg',
+      type: asset.mimeType || 'image/jpeg',
+    };
+
+    const uploadedImage = await uploadImage(imageForUpload);
+    if (uploadedImage) {
+      const imageUrl = getImageUrl(uploadedImage.etag);
+      onImagesChange([...images, imageUrl]);
+    }
+  };
+
+  const handleFileSelect = async (file: File) => {
     // Validate file type
     if (!file.type.startsWith('image/')) {
       Alert.alert('Invalid File', 'Please select an image file.');
@@ -49,13 +138,6 @@ export function ImageUpload({
     if (uploadedImage) {
       const imageUrl = getImageUrl(uploadedImage.etag);
       onImagesChange([...images, imageUrl]);
-    } else if (error) {
-      Alert.alert('Upload Failed', error);
-    }
-
-    // Reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -78,10 +160,8 @@ export function ImageUpload({
     }
   };
 
-  const triggerFileSelect = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+  const triggerImagePick = () => {
+    handleImagePick();
   };
 
   return (
@@ -89,15 +169,6 @@ export function ImageUpload({
       <ThemedText type="subtitle" style={styles.label}>
         {label} ({images.length}/{maxImages})
       </ThemedText>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        onChange={handleFileSelect}
-        style={{ display: 'none' }}
-      />
 
       {/* Image grid */}
       <View style={styles.imageGrid}>
@@ -117,7 +188,7 @@ export function ImageUpload({
         {images.length < maxImages && (
           <TouchableOpacity
             style={styles.addButton}
-            onPress={triggerFileSelect}
+            onPress={triggerImagePick}
             disabled={uploading}
           >
             {uploading ? (
@@ -129,9 +200,42 @@ export function ImageUpload({
         )}
       </View>
 
-      {error && (
-        <ThemedText style={styles.errorText}>{error}</ThemedText>
-      )}
+      {/* Modal para escolher entre câmera e galeria */}
+      <Modal
+        visible={showImagePickerModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowImagePickerModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <ThemedText type="subtitle" style={styles.modalTitle}>
+              Adicionar Imagem
+            </ThemedText>
+            
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={handleTakePhoto}
+            >
+              <ThemedText style={styles.modalOptionText}>📷 Tirar Foto</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.modalOption}
+              onPress={handleSelectFromGallery}
+            >
+              <ThemedText style={styles.modalOptionText}>🖼️ Selecionar da Galeria</ThemedText>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.modalOption, styles.cancelOption]}
+              onPress={() => setShowImagePickerModal(false)}
+            >
+              <ThemedText style={styles.cancelOptionText}>Cancelar</ThemedText>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ThemedView>
   );
 }
@@ -192,5 +296,41 @@ const styles = StyleSheet.create({
     color: '#ff4444',
     fontSize: 12,
     marginTop: 4,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  modalOption: {
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalOptionText: {
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  cancelOption: {
+    borderBottomWidth: 0,
+    marginTop: 10,
+  },
+  cancelOptionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#ff4444',
   },
 }); 

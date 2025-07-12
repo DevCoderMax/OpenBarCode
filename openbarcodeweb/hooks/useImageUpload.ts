@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { API_URL } from '@/constants/Api';
-import { getImageDownloadUrl } from '@/utils/imageUtils';
 
 export interface UploadedImage {
   object_name: string;
@@ -9,21 +8,35 @@ export interface UploadedImage {
   last_modified: string;
 }
 
+// Novo tipo para mobile
+export type UploadableImage = File | { uri: string; name: string; type: string };
+
 export function useImageUpload() {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const uploadImage = async (file: File): Promise<UploadedImage | null> => {
+  const uploadImage = async (file: UploadableImage): Promise<UploadedImage | null> => {
     setUploading(true);
     setError(null);
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      if (file instanceof File) {
+        // Web
+        formData.append('file', file);
+      } else {
+        // Mobile
+        formData.append('file', {
+          uri: file.uri,
+          name: file.name,
+          type: file.type,
+        } as any);
+      }
 
       const response = await fetch(`${API_URL}/api/v1/images/`, {
         method: 'POST',
         body: formData,
+        headers: file instanceof File ? {} : { 'Content-Type': 'multipart/form-data' },
       });
 
       if (!response.ok) {
@@ -42,7 +55,7 @@ export function useImageUpload() {
   };
 
   const getImageUrl = (etag: string): string => {
-    return getImageDownloadUrl(etag);
+    return `${API_URL}/api/v1/images/download/${etag}`;
   };
 
   const deleteImage = async (etag: string): Promise<boolean> => {

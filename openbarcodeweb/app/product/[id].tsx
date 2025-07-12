@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Alert, View } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -48,21 +48,17 @@ export default function ProductDetailScreen() {
     setIsSaving(true);
     try {
       const productData: any = {
-        name: product.name,
-        description: product.description,
-        barcode: product.barcode,
-        images: product.images,
-        status: product.status,
-        measure_type: product.measure_type,
+        ...product,
         measure_value: product.measure_value ? parseFloat(String(product.measure_value).replace(',', '.')) : undefined,
         qtt: product.qtt ? parseInt(String(product.qtt), 10) : undefined,
-        brand_id: product.brand_id,
       };
 
       // Remove undefined keys so we don't send them
       Object.keys(productData).forEach(key => productData[key] === undefined && delete productData[key]);
 
-      const response = await fetch(`${API_URL}/api/v1/products/${id}/`, {
+      console.log('Sending product data:', productData);
+
+      const response = await fetch(`${API_URL}/api/v1/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -72,7 +68,8 @@ export default function ProductDetailScreen() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail || 'Failed to update product');
+        console.error('Update failed:', errorData);
+        throw new Error(errorData.detail || `Failed to update product: ${response.status}`);
       }
 
       Alert.alert('Success', 'Product updated successfully!');
@@ -122,7 +119,7 @@ export default function ProductDetailScreen() {
         <Input
           label="Valor da Medida"
           value={String(product.measure_value || '')}
-          onChangeText={(text) => setProduct({ ...product, measure_value: text.replace(/[^0-9.,]/g, '') })}
+          onChangeText={(text) => setProduct({ ...product, measure_value: parseFloat(text.replace(/[^0-9.,]/g, '')) || 0 })}
           keyboardType="numeric"
         />
 
@@ -136,7 +133,7 @@ export default function ProductDetailScreen() {
         <Input
           label="Quantidade"
           value={String(product.qtt || '')}
-          onChangeText={(text) => setProduct({ ...product, qtt: Number(text.replace(/[^0-9]/g, '')) })}
+          onChangeText={(text) => setProduct({ ...product, qtt: parseInt(text.replace(/[^0-9]/g, ''), 10) || 0 })}
           keyboardType="numeric"
         />
 
