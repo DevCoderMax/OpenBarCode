@@ -1,10 +1,12 @@
 from typing import List
 import os
 import uuid
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Query
 from fastapi.responses import StreamingResponse
 from utils.MinioClient import MinioClient
 from models.image import ImageModel
+from PIL import Image
+import io
 
 router = APIRouter(
     prefix="/images",
@@ -87,18 +89,44 @@ def get_image_details(etag: str, minio: MinioClient = Depends(get_minio_client))
         )
 
 @router.get("/download/{etag}")
-def download_image(etag: str, minio: MinioClient = Depends(get_minio_client)):
-    """Faz o download de uma imagem específica pelo ETag."""
+def download_image(
+    etag: str,
+    w: int = Query(None, description='Largura do thumbnail'),
+    h: int = Query(None, description='Altura do thumbnail'),
+    quality: int = Query(85, description='Qualidade da imagem'),
+    minio: MinioClient = Depends(get_minio_client)
+):
+    """Faz o download de uma imagem específica pelo ETag, com suporte a thumbnails."""
     try:
         # Este método precisa ser criado no MinioClient
         response, object_name, size = minio.get_object_stream_by_etag(BUCKET_NAME, etag)
-        
+        image_bytes = response.read()
+        response.close()
+
+        # Se não pediu redimensionamento, retorna a original
+        if not w and not h:
+            return StreamingResponse(
+                io.BytesIO(image_bytes),
+                media_type='image/jpeg',
+                headers={
+                    'Content-Disposition': f'attachment; filename="{object_name}"',
+                    'Content-Length': str(len(image_bytes))
+                }
+            )
+
+        # Redimensiona usando Pillow
+        image = Image.open(io.BytesIO(image_bytes))
+        image = image.convert('RGB')
+        image.thumbnail((w or 256, h or 256))
+        output = io.BytesIO()
+        image.save(output, format='JPEG', quality=quality)
+        output.seek(0)
+
         return StreamingResponse(
-            response,
-            media_type='application/octet-stream',
+            output,
+            media_type='image/jpeg',
             headers={
-                'Content-Disposition': f'attachment; filename="{object_name}"',
-                'Content-Length': str(size)
+                'Content-Disposition': f'inline; filename="thumb_{object_name}"'
             }
         )
     except FileNotFoundError:

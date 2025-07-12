@@ -33,6 +33,7 @@ export default function ScanScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productFound, setProductFound] = useState(false);
+  const [isFetchingExternalData, setIsFetchingExternalData] = useState(false);
   
   // Convert images string to array for the ImageUpload component
   const imagesArray = parseImageUrls(product?.images || null);
@@ -159,6 +160,53 @@ export default function ScanScreen() {
     }
   };
 
+  const handleFetchExternalProductData = async () => {
+    if (!product?.barcode) {
+      Alert.alert('Erro', 'Código de barras não encontrado.');
+      return;
+    }
+
+    setIsFetchingExternalData(true);
+    try {
+      // Aqui você pode usar uma API externa como Open Food Facts, UPC Database, etc.
+      // Exemplo usando Open Food Facts (gratuita)
+      const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${product.barcode}.json`);
+      
+      if (!response.ok) {
+        throw new Error('Falha ao buscar dados externos');
+      }
+
+      const data = await response.json();
+      
+      if (data.status === 1 && data.product) {
+        const productData = data.product;
+        
+        // Preencher automaticamente os campos com os dados encontrados
+        setProduct({
+          ...product,
+          name: productData.product_name || product.name,
+          description: productData.generic_name || productData.product_name || product.description,
+          brand_id: product.brand_id,
+          brand: productData.brands ? { id: 0, name: productData.brands } : product.brand,
+          measure_type: product.measure_type,
+          measure_value: product.measure_value,
+          qtt: product.qtt,
+          status: product.status,
+          images: product.images,
+        });
+
+        Alert.alert('Sucesso', 'Dados do produto carregados automaticamente!');
+      } else {
+        Alert.alert('Informação', 'Nenhum dado encontrado para este código de barras.');
+      }
+    } catch (error: any) {
+      Alert.alert('Erro', 'Falha ao buscar dados externos. Tente novamente.');
+      console.error('Error fetching external data:', error);
+    } finally {
+      setIsFetchingExternalData(false);
+    }
+  };
+
   return (
     <ThemedView style={styles.container}>
       <ThemedView style={styles.inputContainer}>
@@ -191,6 +239,16 @@ export default function ScanScreen() {
           <ThemedText type="title" style={styles.title}>
             {productFound ? 'Editar Produto' : 'Adicionar Novo Produto'}
           </ThemedText>
+
+          {/* Botão para buscar dados externos - só aparece para produtos não cadastrados */}
+          {!productFound && product?.barcode && (
+            <Button
+              title={isFetchingExternalData ? '🔍 Buscando dados...' : '🔍 Buscar dados do produto'}
+              onPress={handleFetchExternalProductData}
+              disabled={isFetchingExternalData}
+              style={styles.externalDataButton}
+            />
+          )}
 
           <Input
             label="Nome do Produto"
@@ -385,5 +443,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+  },
+  externalDataButton: {
+    backgroundColor: '#10b981',
+    marginBottom: 16,
+    height: 50,
+    borderRadius: 8,
   },
 });

@@ -3,19 +3,20 @@ import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
+import { getThumbnailUrl } from '@/utils/imageUtils';
 
 interface ImageCarouselProps {
   images: string[];
   height?: number;
   showIndicators?: boolean;
+  useThumbnails?: boolean;
 }
-
-
 
 export function ImageCarousel({ 
   images, 
   height = 200, 
-  showIndicators = true 
+  showIndicators = true,
+  useThumbnails = true
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
@@ -38,10 +39,22 @@ export function ImageCarousel({
     setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
   };
 
+  // Calcular tamanho do thumbnail baseado na altura do carrossel
+  const getThumbnailSize = () => {
+    if (height <= 150) return { w: 200, h: 150, quality: 70 };
+    if (height <= 250) return { w: 300, h: 250, quality: 75 };
+    return { w: 400, h: 300, quality: 80 };
+  };
+
+  const { w, h, quality } = getThumbnailSize();
+  const currentImageUrl = useThumbnails 
+    ? getThumbnailUrl(images[currentIndex], w, h, quality)
+    : images[currentIndex];
+
   return (
     <View style={[styles.container, { height }]}>
       <Image
-        source={{ uri: images[currentIndex] }}
+        source={{ uri: currentImageUrl }}
         style={[styles.image, { height }]}
         contentFit="cover"
         transition={300}

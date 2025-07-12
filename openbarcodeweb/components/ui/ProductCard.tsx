@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types';
 import { ThemedText } from '@/components/ThemedText';
-import { getFirstImage } from '@/utils/imageUtils';
+import { getFirstImage, getThumbnailUrl } from '@/utils/imageUtils';
 import { ThemedView } from '@/components/ThemedView';
 
 interface ProductCardProps {
@@ -17,12 +17,15 @@ export function ProductCard({ product }: ProductCardProps) {
     router.push(`/product/${product.id}`);
   };
 
+  const firstImage = getFirstImage(product.images);
+  const thumbUrl = firstImage ? getThumbnailUrl(firstImage, 100, 100, 60) : undefined;
+
   return (
     <TouchableOpacity onPress={handlePress}>
       <ThemedView style={styles.card}>
-        {product.images ? (
+        {firstImage ? (
           <Image
-            source={{ uri: getFirstImage(product.images) || '' }}
+            source={{ uri: thumbUrl }}
             style={styles.image}
             contentFit="cover"
             transition={300}

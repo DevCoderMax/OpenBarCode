@@ -27,6 +27,15 @@ export function getImageDownloadUrl(etag: string): string {
 }
 
 /**
+ * Gera uma URL de thumbnail a partir da URL de download
+ */
+export function getThumbnailUrl(url: string, w = 100, h = 100, quality = 60) {
+  if (!url) return '';
+  const sep = url.includes('?') ? '&' : '?';
+  return `${url}${sep}w=${w}&h=${h}&quality=${quality}`;
+}
+
+/**
  * Extrai o ETag de uma URL de download de imagem
  */
 export function extractEtagFromUrl(url: string): string | null {
