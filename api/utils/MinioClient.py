@@ -43,6 +43,20 @@ class MinioClient:
             "version_id": getattr(result, 'version_id', None)
         }
 
+    def upload_file_stream(self, bucket_name: str, object_name: str, file_stream, file_size: int):
+        result = self.client.put_object(
+            bucket_name,
+            object_name,
+            file_stream,
+            file_size
+        )
+        print(f"Stream enviado como '{object_name}' com sucesso!")
+        return {
+            "object_name": result.object_name,
+            "etag": result.etag,
+            "version_id": getattr(result, 'version_id', None)
+        }
+
     def download_file(self, bucket_name: str, object_name: str, file_path: str):
         self.client.fget_object(bucket_name, object_name, file_path)
         print(f"Arquivo '{object_name}' baixado com sucesso!")
@@ -78,6 +92,13 @@ class MinioClient:
                     "size": obj.size,
                     "last_modified": obj.last_modified
                 }
+        raise FileNotFoundError(f"Arquivo com etag '{etag}' não encontrado no bucket '{bucket_name}'.")
+
+    def get_object_stream_by_etag(self, bucket_name: str, etag: str):
+        for obj in self.client.list_objects(bucket_name):
+            if obj.etag == etag:
+                response = self.client.get_object(bucket_name, obj.object_name)
+                return response, obj.object_name, obj.size
         raise FileNotFoundError(f"Arquivo com etag '{etag}' não encontrado no bucket '{bucket_name}'.")
 
     def delete_object(self, bucket_name: str, etag: str):

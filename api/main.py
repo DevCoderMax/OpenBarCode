@@ -10,6 +10,7 @@ from routes.products import router as products_router
 from database import init_db, check_database_connection
 from routes.brands import router as brands_router
 from routes.categories import router as categories_router
+from routes.images import router as images_router
 
 # Configurar logging
 logging.basicConfig(
@@ -105,6 +106,11 @@ app.include_router(
 
 app.include_router(
     products_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    images_router,
     prefix="/api/v1"
 )
 
