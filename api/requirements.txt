@@ -3,3 +3,4 @@ sqlmodel
 fastapi
 uvicorn
 psycopg2-binary
+python-multipart
