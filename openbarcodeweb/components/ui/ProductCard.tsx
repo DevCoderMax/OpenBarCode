@@ -3,6 +3,7 @@ import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Product } from '@/types';
 import { ThemedText } from '@/components/ThemedText';
+import { getFirstImage } from '@/utils/imageUtils';
 import { ThemedView } from '@/components/ThemedView';
 
 interface ProductCardProps {
@@ -21,7 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
       <ThemedView style={styles.card}>
         {product.images ? (
           <Image
-            source={{ uri: product.images }}
+            source={{ uri: getFirstImage(product.images) || '' }}
             style={styles.image}
             contentFit="cover"
             transition={300}

@@ -18,7 +18,9 @@ import { Input } from '@/components/ui/Input';
 import { ThemedSwitch } from '@/components/ui/ThemedSwitch';
 import { CheckboxGroup } from '@/components/ui/Checkbox';
 import { SearchablePicker } from '@/components/ui/SearchablePicker';
+import { ImageUpload } from '@/components/ui/ImageUpload';
 import { API_URL } from '../../constants/Api';
+import { parseImageUrls, stringifyImageUrls } from '@/utils/imageUtils';
 import { Product } from '@/models/Product';
 
 const measureTypeItems = ['l', 'ml', 'kg', 'g', 'un'].map(type => ({ label: type.toUpperCase(), value: type }));
@@ -31,6 +33,9 @@ export default function ScanScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productFound, setProductFound] = useState(false);
+  
+  // Convert images string to array for the ImageUpload component
+  const imagesArray = parseImageUrls(product?.images || null);
 
   useFocusEffect(
     useCallback(() => {
@@ -203,11 +208,11 @@ export default function ScanScreen() {
             value={product.barcode || ''}
             editable={false} // Não editável após a busca
           />
-          <Input
-            label="Imagens (URL, separadas por vírgula)"
-            value={product.images || ''}
-            onChangeText={(text) => setProduct({ ...product, images: text })}
-            multiline
+          <ImageUpload
+            label="Product Images"
+            images={imagesArray}
+            onImagesChange={(images) => setProduct({ ...product, images: stringifyImageUrls(images) })}
+            maxImages={5}
           />
           <Input
             label="Valor da Medida"

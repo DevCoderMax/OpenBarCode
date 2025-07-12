@@ -1,1 +1,1 @@
-export const API_URL = 'https://max-opencodebarapi.uvxtdw.easypanel.host';
+export const API_URL = 'http://localhost:8000';

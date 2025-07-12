@@ -10,6 +10,9 @@ import { useProductDetail } from '@/hooks/useProductDetail';
 import { API_URL } from '../../constants/Api';
 import { CheckboxGroup } from '@/components/ui/Checkbox';
 import { SearchablePicker } from '@/components/ui/SearchablePicker';
+import { ImageUpload } from '@/components/ui/ImageUpload';
+import { ImageCarousel } from '@/components/ui/ImageCarousel';
+import { parseImageUrls, stringifyImageUrls } from '@/utils/imageUtils';
 
 const measureTypeItems = ['l', 'ml', 'kg', 'g', 'un'].map(type => ({ label: type.toUpperCase(), value: type }));
 
@@ -19,6 +22,9 @@ export default function ProductDetailScreen() {
   const { product, loading, error, setProduct } = useProductDetail(id);
 
   const [isSaving, setIsSaving] = useState(false);
+  
+  // Convert images string to array for the ImageUpload component
+  const imagesArray = parseImageUrls(product?.images || null);
 
   if (loading) {
     return (
@@ -83,6 +89,13 @@ export default function ProductDetailScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ThemedText type="title" style={styles.title}>Edit Product</ThemedText>
 
+        {/* Product Images Carousel */}
+        <ImageCarousel
+          images={imagesArray}
+          height={250}
+          showIndicators={true}
+        />
+
         <Input
           label="Name"
           value={product.name}
@@ -99,11 +112,11 @@ export default function ProductDetailScreen() {
           value={product.barcode || ''}
           onChangeText={(text) => setProduct({ ...product, barcode: text })}
         />
-        <Input
-          label="Imagens (URL, separadas por vírgula)"
-          value={product.images || ''}
-          onChangeText={(text) => setProduct({ ...product, images: text })}
-          multiline
+        <ImageUpload
+          label="Product Images"
+          images={imagesArray}
+          onImagesChange={(images) => setProduct({ ...product, images: stringifyImageUrls(images) })}
+          maxImages={5}
         />
 
         <Input

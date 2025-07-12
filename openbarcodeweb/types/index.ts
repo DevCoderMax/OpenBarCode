@@ -9,6 +9,13 @@ export interface Category {
   name: string;
 }
 
+export interface Image {
+  object_name: string;
+  etag: string;
+  size: number;
+  last_modified: string;
+}
+
 export interface Product {
   id: number;
   name: string;
