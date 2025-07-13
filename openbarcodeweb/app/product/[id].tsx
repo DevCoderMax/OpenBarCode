@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Alert, View } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -93,6 +93,27 @@ export default function ProductDetailScreen() {
           showIndicators={true}
         />
 
+        {/* Product Details Card */}
+        <ThemedView style={styles.productInfo}>
+          <ThemedText type="subtitle">{product.name}</ThemedText>
+          {product.brand && (
+            <ThemedText style={styles.detailText}>Marca: {product.brand.name}</ThemedText>
+          )}
+          <View style={styles.productDetails}>
+            <ThemedText style={styles.detailText}>
+              {product.measure_value} {product.measure_type?.toUpperCase()}
+            </ThemedText>
+            <ThemedText style={styles.detailText}>
+              Qtd: {product.qtt}
+            </ThemedText>
+            {product.barcode && (
+              <ThemedText style={styles.detailText}>
+                {product.barcode}
+              </ThemedText>
+            )}
+          </View>
+        </ThemedView>
+
         <Input
           label="Name"
           value={product.name}
@@ -177,5 +198,19 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 24,
   },
-
+  productInfo: {
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    padding: 8,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  productDetails: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  detailText: {
+    fontSize: 12,
+    opacity: 0.7,
+  },
 });
