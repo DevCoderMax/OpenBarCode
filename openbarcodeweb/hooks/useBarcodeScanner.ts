@@ -1,10 +1,11 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { useCameraPermissions, BarcodeScanningResult } from 'expo-camera';
+import { useNotification } from './useNotification';
 
 export function useBarcodeScanner() {
   const [isScanning, setIsScanning] = useState(false);
   const [permission, requestPermission] = useCameraPermissions();
+  const { alert } = useNotification();
 
   const handleBarCodeScanned = useCallback((callback: (data: string) => void) => {
     return ({ data }: BarcodeScanningResult) => {
@@ -20,10 +21,10 @@ export function useBarcodeScanner() {
     if (granted) {
       setIsScanning(true);
     } else {
-      Alert.alert(
+      alert(
         'Permissão necessária',
         'Precisamos da permissão da câmera para escanear códigos de barras.',
-        [{ text: 'OK' }]
+        'warning'
       );
     }
   };

@@ -1,14 +1,15 @@
 import { useState, useCallback } from 'react';
-import { Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { Product } from '../models/Product';
 import { ProductService } from '../services/productService';
+import { useNotification } from './useNotification';
 
 export function useProductScanner() {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productFound, setProductFound] = useState(false);
+  const { alert } = useNotification();
 
   useFocusEffect(
     useCallback(() => {
@@ -21,7 +22,7 @@ export function useProductScanner() {
 
   const searchProduct = async (barcode: string) => {
     if (!barcode) {
-      Alert.alert('Atenção', 'Por favor, digite ou escaneie um código de barras.');
+      alert('Atenção', 'Por favor, digite ou escaneie um código de barras.', 'warning');
       return;
     }
 
@@ -34,14 +35,14 @@ export function useProductScanner() {
       if (data.length > 0) {
         setProduct(data[0]);
         setProductFound(true);
-        Alert.alert('Sucesso', 'Produto encontrado e pronto para edição.');
+        alert('Sucesso', 'Produto encontrado e pronto para edição.', 'success');
       } else {
         setProduct(ProductService.createEmptyProduct(barcode));
         setProductFound(false);
-        Alert.alert('Informação', 'Produto não encontrado. Preencha os dados para adicioná-lo.');
+        alert('Informação', 'Produto não encontrado. Preencha os dados para adicioná-lo.', 'info');
       }
     } catch (error: any) {
-      Alert.alert('Erro', error.message || 'Ocorreu um erro ao buscar o produto.');
+      alert('Erro', error.message || 'Ocorreu um erro ao buscar o produto.', 'error');
     } finally {
       setIsLoading(false);
     }
@@ -53,11 +54,11 @@ export function useProductScanner() {
     setIsSaving(true);
     try {
       await ProductService.saveProduct(product, productFound);
-      Alert.alert('Sucesso', `Produto ${productFound ? 'atualizado' : 'criado'} com sucesso!`);
+      alert('Sucesso', `Produto ${productFound ? 'atualizado' : 'criado'} com sucesso!`, 'success');
       setProduct(null);
       setProductFound(false);
     } catch (error: any) {
-      Alert.alert('Erro', error.message);
+      alert('Erro', error.message, 'error');
     } finally {
       setIsSaving(false);
     }

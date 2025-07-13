@@ -4,11 +4,14 @@ import { ThemedView } from '@/components/ThemedView';
 import { BarcodeInput } from '@/components/ui/BarcodeInput';
 import { ProductForm } from '@/components/ui/ProductForm';
 import { BarcodeScanner } from '@/components/ui/BarcodeScanner';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
 import { useProductScanner } from '@/hooks/useProductScanner';
 import { useBarcodeScanner } from '@/hooks/useBarcodeScanner';
+import { useNotification } from '@/hooks/useNotification';
 
 export default function ScanScreen() {
   const [barcode, setBarcode] = useState('');
+  const { notifications } = useNotification();
   const {
     product,
     isLoading,
@@ -50,6 +53,7 @@ export default function ScanScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <NotificationContainer notifications={notifications} />
       <BarcodeInput
         value={barcode}
         onChangeText={setBarcode}
