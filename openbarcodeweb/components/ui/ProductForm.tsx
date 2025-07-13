@@ -5,6 +5,7 @@ import { Input } from './Input';
 import { Button } from './Button';
 import { ThemedSwitch } from './ThemedSwitch';
 import { CheckboxGroup } from './Checkbox';
+import { Dropdown } from './Dropdown';
 import { SearchablePicker } from './SearchablePicker';
 import { ImageUpload } from './ImageUpload';
 import { Product } from '../../models/Product';
@@ -63,11 +64,12 @@ export function ProductForm({ product, onUpdate, onSave, isSaving, isNewProduct 
         keyboardType="numeric"
       />
       
-      <CheckboxGroup
+      <Dropdown
         label="Tipo de Medida"
-        options={measureTypeItems}
+        items={measureTypeItems}
         selectedValue={product.measure_type || 'un'}
         onValueChange={(value) => onUpdate({ measure_type: value as string })}
+        inline={true}
       />
       
       <Input

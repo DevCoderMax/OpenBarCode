@@ -11,6 +11,7 @@ import { useNotification } from '@/hooks/useNotification';
 
 export default function ScanScreen() {
   const [barcode, setBarcode] = useState('');
+  const [isProcessingLoad, setIsProcessingLoad] = useState(false);
   const { notifications } = useNotification();
   const {
     product,
@@ -45,6 +46,13 @@ export default function ScanScreen() {
     searchProduct(data);
   };
 
+  const handleLoadingAction = () => {
+    setIsProcessingLoad(true);
+    setTimeout(() => {
+      setIsProcessingLoad(false);
+    }, 2000);
+  };
+
   const handleSave = async () => {
     await saveProduct();
     setBarcode('');
@@ -59,6 +67,8 @@ export default function ScanScreen() {
         onChangeText={setBarcode}
         onScan={handleScan}
         onSearch={handleSearch}
+        isLoading={isProcessingLoad}
+        onLoadingAction={handleLoadingAction}
       />
 
       {isLoading && <ActivityIndicator size="large" style={styles.loader} />}

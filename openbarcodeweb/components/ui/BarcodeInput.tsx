@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemedView } from '../ThemedView';
 import { useThemeColor } from '@/hooks/useThemeColor';
@@ -9,9 +9,11 @@ interface BarcodeInputProps {
   onChangeText: (text: string) => void;
   onScan: () => void;
   onSearch: () => void;
+  isLoading?: boolean;
+  onLoadingAction?: () => void;
 }
 
-export function BarcodeInput({ value, onChangeText, onScan, onSearch }: BarcodeInputProps) {
+export function BarcodeInput({ value, onChangeText, onScan, onSearch, isLoading = false, onLoadingAction }: BarcodeInputProps) {
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
   
@@ -33,6 +35,15 @@ export function BarcodeInput({ value, onChangeText, onScan, onSearch }: BarcodeI
       <TouchableOpacity onPress={onSearch} style={styles.iconButton}>
         <MaterialIcons name="search" size={24} color="white" />
       </TouchableOpacity>
+      {onLoadingAction && (
+        <TouchableOpacity onPress={onLoadingAction} style={[styles.iconButton, isLoading && styles.loadingButton]}>
+          {isLoading ? (
+            <ActivityIndicator size={24} color="white" />
+          ) : (
+            <MaterialIcons name="cloud-download" size={24} color="white" />
+          )}
+        </TouchableOpacity>
+      )}
     </ThemedView>
   );
 }
@@ -61,5 +72,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 8,
+  },
+  loadingButton: {
+    backgroundColor: '#dc3545',
   },
 });

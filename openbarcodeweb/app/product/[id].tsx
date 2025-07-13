@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { ThemedSwitch } from '@/components/ui/ThemedSwitch';
 import { useProductDetail } from '@/hooks/useProductDetail';
 import { API_URL } from '../../constants/Api';
-import { CheckboxGroup } from '@/components/ui/Checkbox';
+import { Dropdown } from '@/components/ui/Dropdown';
 import { SearchablePicker } from '@/components/ui/SearchablePicker';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
@@ -144,11 +144,12 @@ export default function ProductDetailScreen() {
           keyboardType="numeric"
         />
 
-        <CheckboxGroup
+        <Dropdown
           label="Tipo de Medida"
-          options={measureTypeItems}
+          items={measureTypeItems}
           selectedValue={product.measure_type || 'un'}
           onValueChange={(value) => setProduct({ ...product, measure_type: value as string })}
+          inline={true}
         />
 
         <Input
