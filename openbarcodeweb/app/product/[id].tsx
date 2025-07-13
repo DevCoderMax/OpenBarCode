@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, ScrollView, ActivityIndicator, Alert, View } from 'react-native';
+import { StyleSheet, ScrollView, ActivityIndicator, Alert, View, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
@@ -149,7 +149,7 @@ export default function ProductDetailScreen() {
           items={measureTypeItems}
           selectedValue={product.measure_type || 'un'}
           onValueChange={(value) => setProduct({ ...product, measure_type: value as string })}
-          inline={true}
+          inline={Platform.OS === 'web'}
         />
 
         <Input

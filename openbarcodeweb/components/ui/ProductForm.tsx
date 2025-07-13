@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, Platform } from 'react-native';
 import { ThemedText } from '../ThemedText';
 import { Input } from './Input';
 import { Button } from './Button';
@@ -69,7 +69,7 @@ export function ProductForm({ product, onUpdate, onSave, isSaving, isNewProduct 
         items={measureTypeItems}
         selectedValue={product.measure_type || 'un'}
         onValueChange={(value) => onUpdate({ measure_type: value as string })}
-        inline={true}
+        inline={Platform.OS === 'web'}
       />
       
       <Input

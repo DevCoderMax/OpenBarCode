@@ -43,6 +43,7 @@ export default function ScanScreen() {
 
   const handleBarcodeScanned = (data: string) => {
     setBarcode(data);
+    stopScanning();
     searchProduct(data);
   };
 

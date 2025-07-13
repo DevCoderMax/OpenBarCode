@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import { MaterialIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
@@ -19,6 +19,14 @@ export function ImageCarousel({
   useThumbnails = true
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+  const { width: screenWidth } = Dimensions.get('window');
+  
+  const handleScroll = (event: any) => {
+    const contentOffset = event.nativeEvent.contentOffset;
+    const index = Math.round(contentOffset.x / screenWidth);
+    setCurrentIndex(index);
+  };
 
   if (!images || images.length === 0) {
     return (
@@ -32,11 +40,15 @@ export function ImageCarousel({
   }
 
   const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
+    const newIndex = currentIndex > 0 ? currentIndex - 1 : images.length - 1;
+    setCurrentIndex(newIndex);
+    scrollViewRef.current?.scrollTo({ x: newIndex * screenWidth, animated: true });
   };
 
   const handleNext = () => {
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
+    const newIndex = currentIndex < images.length - 1 ? currentIndex + 1 : 0;
+    setCurrentIndex(newIndex);
+    scrollViewRef.current?.scrollTo({ x: newIndex * screenWidth, animated: true });
   };
 
   // Calcular tamanho do thumbnail baseado na altura do carrossel
@@ -47,18 +59,33 @@ export function ImageCarousel({
   };
 
   const { w, h, quality } = getThumbnailSize();
-  const currentImageUrl = useThumbnails 
-    ? getThumbnailUrl(images[currentIndex], w, h, quality)
-    : images[currentIndex];
 
   return (
     <View style={[styles.container, { height }]}>
-      <Image
-        source={{ uri: currentImageUrl }}
-        style={[styles.image, { height }]}
-        contentFit="cover"
-        transition={300}
-      />
+      <ScrollView
+        ref={scrollViewRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={handleScroll}
+        style={{ height }}
+      >
+        {images.map((imageUrl, index) => {
+          const imageSource = useThumbnails 
+            ? getThumbnailUrl(imageUrl, w, h, quality)
+            : imageUrl;
+          
+          return (
+            <Image
+              key={index}
+              source={{ uri: imageSource }}
+              style={[styles.image, { height, width: screenWidth }]}
+              contentFit="cover"
+              priority={index <= 2 ? 'high' : 'normal'}
+            />
+          );
+        })}
+      </ScrollView>
       
       {images.length > 1 && (
         <>
@@ -92,7 +119,7 @@ export function ImageCarousel({
         </View>
       )}
 
-      {images.length > 1 && (
+          {images.length > 1 && (
         <View style={styles.counter}>
           <ThemedText style={styles.counterText}>
             {currentIndex + 1} / {images.length}
