@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNotification, Notification } from '../../hooks/useNotification';
@@ -36,6 +36,42 @@ interface NotificationItemProps {
 }
 
 function NotificationItem({ notification, onClose, textColor }: NotificationItemProps) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(100)).current;
+
+  useEffect(() => {
+    // Fade in and slide up animation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleClose = () => {
+    // Fade out animation before closing
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 100,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onClose();
+    });
+  };
   const getNotificationStyle = (type: string) => {
     switch (type) {
       case 'success':
@@ -52,7 +88,16 @@ function NotificationItem({ notification, onClose, textColor }: NotificationItem
   const style = getNotificationStyle(notification.type);
 
   return (
-    <Animated.View style={[styles.notification, { backgroundColor: style.backgroundColor }]}>
+    <Animated.View 
+      style={[
+        styles.notification, 
+        { 
+          backgroundColor: style.backgroundColor,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
+        }
+      ]}
+    >
       <View style={styles.content}>
         <MaterialIcons 
           name={style.iconName} 
@@ -66,7 +111,7 @@ function NotificationItem({ notification, onClose, textColor }: NotificationItem
             <Text style={styles.message}>{notification.message}</Text>
           )}
         </View>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
           <MaterialIcons name="close" size={18} color="white" />
         </TouchableOpacity>
       </View>

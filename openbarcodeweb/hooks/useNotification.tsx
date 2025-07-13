@@ -27,8 +27,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     setNotifications(prev => [...prev, newNotification]);
 
-    // Auto remove after duration (default 4 seconds)
-    const duration = notification.duration ?? 4000;
+    // Auto remove after duration (default 2.5 seconds)
+    const duration = notification.duration ?? 2500;
     setTimeout(() => {
       hideNotification(id);
     }, duration);
