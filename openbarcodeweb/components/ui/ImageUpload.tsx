@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator, Platform, Modal } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { MaterialIcons } from '@expo/vector-icons';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useImageUpload, UploadableImage } from '@/hooks/useImageUpload';
@@ -27,6 +28,7 @@ export function ImageUpload({
   const backgroundColor = useThemeColor({}, 'background');
   const borderColor = useThemeColor({}, 'border');
   const textColor = useThemeColor({}, 'text');
+  const iconColor = useThemeColor({}, 'icon');
 
   const handleImagePick = async () => {
     if (images.length >= maxImages) {
@@ -223,14 +225,20 @@ export function ImageUpload({
               style={[styles.modalOption, { borderBottomColor: borderColor }]}
               onPress={handleTakePhoto}
             >
-              <ThemedText style={styles.modalOptionText}>📷 Tirar Foto</ThemedText>
+              <View style={styles.modalOptionContent}>
+                <MaterialIcons name="photo-camera" size={24} color={iconColor} />
+                <ThemedText style={styles.modalOptionText}>Tirar Foto</ThemedText>
+              </View>
             </TouchableOpacity>
             
             <TouchableOpacity
               style={[styles.modalOption, { borderBottomColor: borderColor }]}
               onPress={handleSelectFromGallery}
             >
-              <ThemedText style={styles.modalOptionText}>🖼️ Selecionar da Galeria</ThemedText>
+              <View style={styles.modalOptionContent}>
+                <MaterialIcons name="photo-library" size={24} color={iconColor} />
+                <ThemedText style={styles.modalOptionText}>Selecionar da Galeria</ThemedText>
+              </View>
             </TouchableOpacity>
             
             <TouchableOpacity
@@ -324,9 +332,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomWidth: 1,
   },
+  modalOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
   modalOptionText: {
     fontSize: 16,
-    textAlign: 'center',
   },
   cancelOption: {
     borderBottomWidth: 0,

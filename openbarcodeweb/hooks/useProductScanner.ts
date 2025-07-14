@@ -9,6 +9,7 @@ export function useProductScanner() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [productFound, setProductFound] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const { alert } = useNotification();
 
   useFocusEffect(
@@ -16,6 +17,7 @@ export function useProductScanner() {
       return () => {
         setProduct(null);
         setProductFound(false);
+        setHasSearched(false);
       };
     }, [])
   );
@@ -28,6 +30,7 @@ export function useProductScanner() {
 
     setIsLoading(true);
     setProduct(null);
+    setHasSearched(true);
 
     try {
       const data = await ProductService.searchProduct(barcode);
@@ -73,6 +76,7 @@ export function useProductScanner() {
   const clearProduct = () => {
     setProduct(null);
     setProductFound(false);
+    setHasSearched(false);
   };
 
   return {
@@ -80,6 +84,7 @@ export function useProductScanner() {
     isLoading,
     isSaving,
     productFound,
+    hasSearched,
     searchProduct,
     saveProduct,
     updateProduct,

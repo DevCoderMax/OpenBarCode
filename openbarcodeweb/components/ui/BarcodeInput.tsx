@@ -11,9 +11,10 @@ interface BarcodeInputProps {
   onSearch: () => void;
   isLoading?: boolean;
   onLoadingAction?: () => void;
+  isDownloadEnabled?: boolean;
 }
 
-export function BarcodeInput({ value, onChangeText, onScan, onSearch, isLoading = false, onLoadingAction }: BarcodeInputProps) {
+export function BarcodeInput({ value, onChangeText, onScan, onSearch, isLoading = false, onLoadingAction, isDownloadEnabled = false }: BarcodeInputProps) {
   const textColor = useThemeColor({}, 'text');
   const borderColor = useThemeColor({}, 'border');
   
@@ -36,11 +37,23 @@ export function BarcodeInput({ value, onChangeText, onScan, onSearch, isLoading 
         <MaterialIcons name="search" size={24} color="white" />
       </TouchableOpacity>
       {onLoadingAction && (
-        <TouchableOpacity onPress={onLoadingAction} style={[styles.iconButton, isLoading && styles.loadingButton]}>
+        <TouchableOpacity 
+          onPress={onLoadingAction} 
+          style={[
+            styles.iconButton, 
+            isLoading && styles.loadingButton,
+            !isDownloadEnabled && styles.disabledButton
+          ]}
+          disabled={!isDownloadEnabled}
+        >
           {isLoading ? (
             <ActivityIndicator size={24} color="white" />
           ) : (
-            <MaterialIcons name="cloud-download" size={24} color="white" />
+            <MaterialIcons 
+              name="cloud-download" 
+              size={24} 
+              color={!isDownloadEnabled ? "#999" : "white"} 
+            />
           )}
         </TouchableOpacity>
       )}
@@ -75,5 +88,8 @@ const styles = StyleSheet.create({
   },
   loadingButton: {
     backgroundColor: '#dc3545',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
 });

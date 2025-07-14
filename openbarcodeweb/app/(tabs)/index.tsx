@@ -18,6 +18,7 @@ export default function ScanScreen() {
     isLoading,
     isSaving,
     productFound,
+    hasSearched,
     searchProduct,
     saveProduct,
     updateProduct,
@@ -70,6 +71,7 @@ export default function ScanScreen() {
         onSearch={handleSearch}
         isLoading={isProcessingLoad}
         onLoadingAction={handleLoadingAction}
+        isDownloadEnabled={hasSearched && !productFound}
       />
 
       {isLoading && <ActivityIndicator size="large" style={styles.loader} />}
