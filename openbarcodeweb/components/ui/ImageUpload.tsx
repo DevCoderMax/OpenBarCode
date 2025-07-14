@@ -5,6 +5,7 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useImageUpload, UploadableImage } from '@/hooks/useImageUpload';
 import { extractEtagFromUrl } from '@/utils/imageUtils';
+import { useThemeColor } from '@/hooks/useThemeColor';
 
 interface ImageUploadProps {
   label?: string;
@@ -21,6 +22,11 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const { uploadImage, getImageUrl, deleteImage, uploading } = useImageUpload();
   const [showImagePickerModal, setShowImagePickerModal] = useState(false);
+  
+  // Cores do tema
+  const backgroundColor = useThemeColor({}, 'background');
+  const borderColor = useThemeColor({}, 'border');
+  const textColor = useThemeColor({}, 'text');
 
   const handleImagePick = async () => {
     if (images.length >= maxImages) {
@@ -208,20 +214,20 @@ export function ImageUpload({
         onRequestClose={() => setShowImagePickerModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor, borderColor }]}>
             <ThemedText type="subtitle" style={styles.modalTitle}>
               Adicionar Imagem
             </ThemedText>
             
             <TouchableOpacity
-              style={styles.modalOption}
+              style={[styles.modalOption, { borderBottomColor: borderColor }]}
               onPress={handleTakePhoto}
             >
               <ThemedText style={styles.modalOptionText}>📷 Tirar Foto</ThemedText>
             </TouchableOpacity>
             
             <TouchableOpacity
-              style={styles.modalOption}
+              style={[styles.modalOption, { borderBottomColor: borderColor }]}
               onPress={handleSelectFromGallery}
             >
               <ThemedText style={styles.modalOptionText}>🖼️ Selecionar da Galeria</ThemedText>
@@ -304,7 +310,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 20,
     width: '80%',
@@ -318,7 +323,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
   },
   modalOptionText: {
     fontSize: 16,
