@@ -6,10 +6,13 @@ import { ThemedText } from '@/components/ThemedText';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { ThemedSwitch } from '@/components/ui/ThemedSwitch';
+import { NotificationContainer } from '@/components/ui/NotificationContainer';
 import { useProductDetail } from '@/hooks/useProductDetail';
+import { useNotification } from '@/hooks/useNotification';
 import { API_URL } from '../../constants/Api';
 import { Dropdown } from '@/components/ui/Dropdown';
 import { SearchablePicker } from '@/components/ui/SearchablePicker';
+import { CategoryPicker } from '@/components/ui/CategoryPicker';
 import { ImageUpload } from '@/components/ui/ImageUpload';
 import { ImageCarousel } from '@/components/ui/ImageCarousel';
 import { parseImageUrls, stringifyImageUrls } from '@/utils/imageUtils';
@@ -20,6 +23,7 @@ export default function ProductDetailScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { product, loading, error, setProduct } = useProductDetail(id);
+  const { notifications, alert } = useNotification();
 
   const [isSaving, setIsSaving] = useState(false);
   
@@ -51,6 +55,7 @@ export default function ProductDetailScreen() {
         ...product,
         measure_value: product.measure_value ? parseFloat(String(product.measure_value).replace(',', '.')) : undefined,
         qtt: product.qtt ? parseInt(String(product.qtt), 10) : undefined,
+        category_ids: product.categories?.map(cat => cat.id) || [],
       };
 
       // Remove undefined keys so we don't send them
@@ -72,10 +77,14 @@ export default function ProductDetailScreen() {
         throw new Error(errorData.detail || `Failed to update product: ${response.status}`);
       }
 
-      Alert.alert('Success', 'Product updated successfully!');
-      router.back();
+      alert('Sucesso', 'Produto atualizado com sucesso!', 'success');
+      
+      // Aguarda um pouco para o usuário ver a notificação antes de voltar
+      setTimeout(() => {
+        router.back();
+      }, 1500);
     } catch (e: any) {
-      Alert.alert('Error', e.message);
+      alert('Erro', e.message, 'error');
     } finally {
       setIsSaving(false);
     }
@@ -83,6 +92,7 @@ export default function ProductDetailScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <NotificationContainer notifications={notifications} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <ThemedText type="title" style={styles.title}>Edit Product</ThemedText>
 
@@ -165,6 +175,12 @@ export default function ProductDetailScreen() {
           onValueChange={(brand) => {
             setProduct({ ...product, brand_id: brand.id, brand: brand });
           }}
+        />
+        
+        <CategoryPicker
+          label="Categorias"
+          selectedCategories={product.categories || []}
+          onValueChange={(categories) => setProduct({ ...product, categories })}
         />
 
         <ThemedSwitch

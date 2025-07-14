@@ -7,6 +7,7 @@ import { ThemedSwitch } from './ThemedSwitch';
 import { CheckboxGroup } from './Checkbox';
 import { Dropdown } from './Dropdown';
 import { SearchablePicker } from './SearchablePicker';
+import { CategoryPicker } from './CategoryPicker';
 import { ImageUpload } from './ImageUpload';
 import { Product } from '../../models/Product';
 import { parseImageUrls, stringifyImageUrls } from '../../utils/imageUtils';
@@ -83,6 +84,12 @@ export function ProductForm({ product, onUpdate, onSave, isSaving, isNewProduct 
         label="Marca"
         selectedLabel={product.brand ? product.brand.name : ''}
         onValueChange={(brand) => onUpdate({ brand_id: brand.id, brand: brand })}
+      />
+      
+      <CategoryPicker
+        label="Categorias"
+        selectedCategories={product.categories || []}
+        onValueChange={(categories) => onUpdate({ categories })}
       />
       
       <ThemedSwitch

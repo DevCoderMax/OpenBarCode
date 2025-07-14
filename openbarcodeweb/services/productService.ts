@@ -23,6 +23,7 @@ export class ProductService {
       ...product,
       measure_value: product.measure_value ? parseFloat(String(product.measure_value).replace(',', '.')) : undefined,
       qtt: product.qtt ? parseInt(String(product.qtt), 10) : undefined,
+      category_ids: product.categories?.map(cat => cat.id) || [],
     };
 
     if (!isUpdate) {
@@ -55,6 +56,7 @@ export class ProductService {
       measure_type: 'un',
       measure_value: 0,
       qtt: 1,
+      categories: [],
     };
   }
 }
