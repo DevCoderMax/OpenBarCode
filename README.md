@@ -1,14 +1,47 @@
 # OpenBarCode
 
-OpenBarcode is an open-source project for registering, consulting, and managing product barcodes. It consists of a backend API built with FastAPI and a frontend mobile application developed with React Native and Expo.
+OpenBarCode é uma biblioteca de código aberto para acessar e cadastrar informações de produtos usando códigos de barras. O projeto consiste em uma API backend construída com FastAPI e uma aplicação frontend móvel desenvolvida com React Native e Expo.
 
-## Features
+## Como Funciona
 
-- **Product Management**: Create, read, update, and delete products.
-- **Category Management**: Organize products into categories.
-- **Brand Management**: Keep track of product brands.
-- **Barcode Scanning**: The mobile app allows scanning barcodes to retrieve product information.
-- **RESTful API**: A well-documented API for interacting with the data.
+O OpenBarCode funciona como um sistema completo de gerenciamento de produtos baseado em códigos de barras:
+
+### 1. **Escaneamento de Códigos de Barras**
+- O aplicativo móvel utiliza a câmera do dispositivo para escanear códigos de barras (EAN13, EAN8, Code128, Code39, Code93, UPC-A, UPC-E, QR Code)
+- Utiliza a biblioteca `expo-camera` para captura e reconhecimento automático
+- Interface intuitiva com modal de escaneamento e visualização em tempo real
+
+### 2. **Busca e Consulta de Produtos**
+- Após escanear um código, o sistema consulta a API backend para verificar se o produto já existe no banco de dados
+- Se encontrado, exibe todas as informações cadastradas (nome, descrição, marca, categoria, medidas, etc.)
+- Se não encontrado, apresenta um formulário em branco para cadastro de novo produto
+
+### 3. **Cadastro e Edição de Produtos**
+- Interface completa para cadastro com campos para:
+  - Nome do produto
+  - Descrição
+  - Marca (selecionável de lista pré-cadastrada)
+  - Categorias (seleção múltipla)
+  - Tipo de medida (litro, ml, kg, g, unidade)
+  - Valor da medida e quantidade
+  - Upload de imagens
+  - Status ativo/inativo
+
+### 4. **Armazenamento e Gerenciamento**
+- Backend robusto com FastAPI e PostgreSQL
+- Relacionamentos complexos entre produtos, marcas e categorias
+- Sistema de imagens com MinIO para armazenamento de arquivos
+- API RESTful completa com endpoints para todas as operações CRUD
+
+## Funcionalidades
+
+- **Escaneamento de Códigos**: Reconhecimento automático de múltiplos formatos de código de barras
+- **Gerenciamento de Produtos**: Criar, consultar, atualizar e deletar produtos
+- **Sistema de Categorias**: Organizar produtos em categorias múltiplas
+- **Controle de Marcas**: Gerenciar marcas de produtos
+- **Upload de Imagens**: Suporte a múltiplas imagens por produto
+- **Interface Responsiva**: Aplicativo móvel com design moderno e intuitivo
+- **API Documentada**: API RESTful com documentação automática via Swagger
 
 ## Technologies Used
 
