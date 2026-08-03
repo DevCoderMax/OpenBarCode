@@ -28,7 +28,7 @@ def get_minio_client():
 
 # --- Rotas ---
 
-@router.post("/", response_model=ImageModel, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ImageModel, status_code=status.HTTP_201_CREATED)
 def upload_image(
     file: UploadFile = File(...),
     minio: MinioClient = Depends(get_minio_client)
@@ -57,7 +57,7 @@ def upload_image(
             detail=f"Failed to upload image: {e}"
         )
 
-@router.get("/", response_model=List[ImageModel])
+@router.get("", response_model=List[ImageModel])
 def list_images(minio: MinioClient = Depends(get_minio_client)):
     """Lista todas as imagens no bucket."""
     try:

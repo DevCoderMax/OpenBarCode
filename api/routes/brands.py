@@ -10,7 +10,7 @@ router = APIRouter(
     responses={404: {"description": "Brand not found"}}
 )
 
-@router.post("/", response_model=BrandRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=BrandRead, status_code=status.HTTP_201_CREATED)
 def create_brand(
     brand_data: BrandCreate,
     session: Session = Depends(get_session)
@@ -35,7 +35,7 @@ def create_brand(
     
     return brand
 
-@router.get("/", response_model=List[BrandRead])
+@router.get("", response_model=List[BrandRead])
 def list_brands(
     skip: int = 0,
     limit: int = 100,
@@ -121,7 +121,7 @@ def delete_brand(
     
     return None
 
-@router.get("/search/", response_model=List[BrandRead])
+@router.get("/search", response_model=List[BrandRead])
 def search_brands(
     name: str,
     session: Session = Depends(get_session)

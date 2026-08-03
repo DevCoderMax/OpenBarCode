@@ -10,7 +10,7 @@ router = APIRouter(
     responses={404: {"description": "Category not found"}}
 )
 
-@router.post("/", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=CategoryRead, status_code=status.HTTP_201_CREATED)
 def create_category(
     category_data: CategoryCreate,
     session: Session = Depends(get_session)
@@ -35,7 +35,7 @@ def create_category(
     
     return category
 
-@router.get("/", response_model=List[CategoryRead])
+@router.get("", response_model=List[CategoryRead])
 def list_categories(
     skip: int = 0,
     limit: int = 100,
@@ -121,7 +121,7 @@ def delete_category(
     
     return None
 
-@router.get("/search/", response_model=List[CategoryRead])
+@router.get("/search", response_model=List[CategoryRead])
 def search_categories(
     name: str,
     session: Session = Depends(get_session)

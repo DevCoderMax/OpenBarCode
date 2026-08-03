@@ -49,7 +49,7 @@ def _build_product_response(session: Session, product: Product) -> ProductRead:
     
     return ProductRead(**product_dict)
 
-@router.post("/", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProductRead, status_code=status.HTTP_201_CREATED)
 def create_product(
     product: ProductCreate,
     session: Session = Depends(get_session)
@@ -140,7 +140,7 @@ def create_product(
             detail=f"Erro interno ao criar produto: {str(e)}"
         )
 
-@router.get("/", response_model=List[ProductRead])
+@router.get("", response_model=List[ProductRead])
 def list_products(
     skip: int = 0,
     limit: int = 100,
@@ -281,7 +281,7 @@ def delete_product(
     
     return None
 
-@router.get("/search/", response_model=List[ProductRead])
+@router.get("/search", response_model=List[ProductRead])
 def search_products(
     name: Optional[str] = None,
     barcode: Optional[str] = None,

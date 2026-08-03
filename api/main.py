@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import logging
 from contextlib import asynccontextmanager
 import time
+from starlette.types import ASGIApp, Receive, Scope, Send
 from routes.products import router as products_router
 
 # Imports do projeto
@@ -11,6 +12,23 @@ from database import init_db, check_database_connection
 from routes.brands import router as brands_router
 from routes.categories import router as categories_router
 from routes.images import router as images_router
+
+
+class StripTrailingSlashMiddleware:
+    """Aceita URLs com ou sem barra final, sem emitir 307."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] == "http":
+            path = scope.get("path", "")
+            if len(path) > 1 and path.endswith("/"):
+                scope = dict(scope)
+                scope["path"] = path.rstrip("/")
+                if "raw_path" in scope:
+                    scope["raw_path"] = scope["path"].encode("ascii")
+        await self.app(scope, receive, send)
 
 # Configurar logging
 logging.basicConfig(
@@ -46,8 +64,12 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
+    redirect_slashes=False,
 )
+
+# Normaliza path antes do roteamento (evita 307 http atrás do proxy)
+app.add_middleware(StripTrailingSlashMiddleware)
 
 # Configurar CORS
 app.add_middleware(
