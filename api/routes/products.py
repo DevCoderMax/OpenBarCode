@@ -172,6 +172,31 @@ def list_products(
     
     return [_build_product_response(session, product) for product in products]
 
+@router.get("/search", response_model=List[ProductRead])
+def search_products(
+    name: Optional[str] = None,
+    barcode: Optional[str] = None,
+    session: Session = Depends(get_session)
+):
+    """Buscar produtos por nome ou código de barras"""
+    query = select(Product)
+
+    if name:
+        query = query.where(Product.name.ilike(f"%{name}%"))
+
+    if barcode:
+        query = query.where(Product.barcode.ilike(f"%{barcode}%"))
+
+    if not name and not barcode:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="At least one search parameter (name or barcode) is required"
+        )
+
+    products = session.exec(query).all()
+
+    return [_build_product_response(session, product) for product in products]
+
 @router.get("/{product_id}", response_model=ProductRead)
 def get_product(
     product_id: int,
@@ -278,33 +303,8 @@ def delete_product(
     
     session.delete(product)
     session.commit()
-    
-    return None
 
-@router.get("/search", response_model=List[ProductRead])
-def search_products(
-    name: Optional[str] = None,
-    barcode: Optional[str] = None,
-    session: Session = Depends(get_session)
-):
-    """Buscar produtos por nome ou código de barras"""
-    query = select(Product)
-    
-    if name:
-        query = query.where(Product.name.ilike(f"%{name}%"))
-    
-    if barcode:
-        query = query.where(Product.barcode.ilike(f"%{barcode}%"))
-    
-    if not name and not barcode:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="At least one search parameter (name or barcode) is required"
-        )
-    
-    products = session.exec(query).all()
-    
-    return [_build_product_response(session, product) for product in products]
+    return None
 
 @router.get("/by-brand/{brand_id}", response_model=List[ProductRead])
 def get_products_by_brand(
